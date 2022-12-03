@@ -116,32 +116,32 @@ int main() {
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    float vertices[] = {0.9f,  0.0f, 0.0f, 0.5f,  0.0f, 0.0f, 0.7f,  0.5f, 0.0f,
-
-                        -0.9f, 0.0f, 0.0f, -0.5f, 0.0f, 0.0f, -0.7f, 0.5f, 0.0f};
+    float first[] = {0.9f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.7f, 0.5f, 0.0f};
+    float second[] = {-0.9f, 0.0f, 0.0f, -0.5f, 0.0f, 0.0f, -0.7f, 0.5f, 0.0f};
 
     // generate vertex object buffer that can hold vertices in the GPU memory
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
+    // possible to generate multiple at the same time
+    unsigned int VBOs[2];
+    glGenBuffers(2, VBOs);
 
     // vertex array object stores subsequent vertex attribute calls
     // when configuring vertex attribute pointers you only have to make those calls once and whenever we want to draw
     // the object, we can just bind the corresponding VAO this makes switching between different vertex data and
     // attribute configurations as easy as binding a different VAO
-    unsigned int VAO;
-    glGenVertexArrays(1, &VAO);
+    unsigned int VAOs[2];
+    glGenVertexArrays(2, VAOs);
 
     // ..:: Initialization code (done once (unless your object frequently changes)) :: ..
     //         1. bind Vertex Array Object
-    glBindVertexArray(VAO);
+    glBindVertexArray(VAOs[0]);
 
     //         2. copy our vertices array in a buffer for OpenGL to use
     // bind buffer to the buffer type for vertices
     // only one buffer can be bind to GL_ARRAY_BUFFER at a time
     // several buffers of different type can be bound
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
     // copy vertex data to opengl buffer
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(first), first, GL_STATIC_DRAW);
 
     //          3. then set our vertex attributes pointers
     // tell opengl how to interpret the data
@@ -149,8 +149,18 @@ int main() {
     // Each position is composed of 3 of those values.
     // There is no space (or other values) between each set of 3 values. The values are tightly packed in the array.
     // The first value in the data is at the beginning of the buffer.
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(0);
+    // glBindVertexArray(0); // no need to unbind at all as we directly bind a different VAO the next few lines
+
+    // now do the same for second triangle
+    glBindVertexArray(VAOs[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(second), second, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(0);
+    // glBindVertexArray(0); // not really necessary as well, but beware of calls that could affect VAOs while this one
+    // is bound (like binding element buffer objects, or enabling/disabling vertex attributes)
 
     // render loop
     while (!glfwWindowShouldClose(window)) {
@@ -160,12 +170,22 @@ int main() {
 
         //          4. draw the object
         glUseProgram(shaderProgram);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        // draw first triangle using the data from the first VAO
+        glBindVertexArray(VAOs[0]);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        // then we draw the second triangle using the data from the second VAO
+        glBindVertexArray(VAOs[1]);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // check and call events and swap buffers
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    // delete resources, not really necessary as program will exit
+    glDeleteVertexArrays(2, VAOs);
+    glDeleteBuffers(2, VBOs);
+    glDeleteProgram(shaderProgram);
 
     glfwTerminate();
     return 0;
