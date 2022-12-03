@@ -116,17 +116,9 @@ int main() {
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    float vertices[] = {
-        0.5f,  0.5f,  0.0f,  // top right
-        0.5f,  -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  // bottom left
-        -0.5f, 0.5f,  0.0f   // top left
-    };
-    unsigned int indices[] = {
-        // note that we start from 0!
-        0, 1, 3,  // first triangle
-        1, 2, 3   // second triangle
-    };
+    float vertices[] = {0.9f,  0.0f, 0.0f, 0.5f,  0.0f, 0.0f, 0.7f,  0.5f, 0.0f,
+
+                        -0.9f, 0.0f, 0.0f, -0.5f, 0.0f, 0.0f, -0.7f, 0.5f, 0.0f};
 
     // generate vertex object buffer that can hold vertices in the GPU memory
     unsigned int VBO;
@@ -139,11 +131,6 @@ int main() {
     unsigned int VAO;
     glGenVertexArrays(1, &VAO);
 
-    // element buffer object
-    // used in indexed drawing, with vertices and indices
-    unsigned int EBO;
-    glGenBuffers(1, &EBO);
-
     // ..:: Initialization code (done once (unless your object frequently changes)) :: ..
     //         1. bind Vertex Array Object
     glBindVertexArray(VAO);
@@ -155,10 +142,6 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     // copy vertex data to opengl buffer
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // bind ebo, its ok to bind multiple buffers at the same time as long as their not of same type
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     //          3. then set our vertex attributes pointers
     // tell opengl how to interpret the data
@@ -177,8 +160,7 @@ int main() {
 
         //          4. draw the object
         glUseProgram(shaderProgram);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         // check and call events and swap buffers
         glfwSwapBuffers(window);
